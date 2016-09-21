@@ -1,0 +1,199 @@
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+
+using namespace std;
+
+struct Part
+{
+    int number;
+    float price;
+    Part *next;
+};
+
+class Inventory
+{
+protected:
+    Part *start;
+    Part *last;
+public:
+    Inventory(void);
+    void link(Part);
+    void remove(int);
+    void printparts(void);
+};
+
+Inventory::Inventory(void)
+{
+    start = NULL;
+}
+
+//------------------------------------------------
+//  -- creates an ordered linked list --
+//  it first checks to see if there IS a list
+//    if not it creates the list
+//  if so, it looks to see if the new item goes first
+//    if so, it places it first
+//  if not, it moves down until it finds the correct
+//    location or has come to the end
+//    it then places it in the middle or last
+//------------------------------------------------
+
+void
+Inventory::link(Part item)
+{
+    Part *p, *last, *here;
+    p = new Part;              // creates a new Part struct and gets the address of Part
+    p->number = item.number;   // p looks at number component, box 'number'
+    p->price  = item.price;    // p looks at price component, 'price' box
+    
+    if (start == NULL)
+    {
+        start = p;
+        start -> next = NULL;
+    }
+    else
+    {
+        here = start;
+        if(p->number < here->number)
+        {
+            p->next = here;
+            start = p;
+        }
+        else
+        {
+            while(p->number > here->number && here->next != NULL)
+            {
+                last = here;
+                here = here->next;
+            }
+            
+            if (p->number < here->number)          // <-- it goes in the middle
+            {
+                last->next = p;
+                p->next = here;
+            }
+            else                                   // <-- it goes last  n
+            {
+                here->next = p;
+                p->next = NULL;
+            }
+        }
+    }
+}
+
+//---------------------------------------------
+//  -- removes an item from the list --
+//  it assumes we have a list
+//  it finds the item to be removed, links
+//  around it, then deletes the item
+//  the item may be the first one
+//---------------------------------------------
+
+
+void
+Inventory::remove(int remove)
+{
+    Part *before = NULL;
+    Part *erase = NULL;
+    
+    if(start->number == remove)
+    {
+        before = start;
+        start = before->next;
+        delete before;
+        return;
+    }
+    
+    before = start;
+    erase = start->next;
+    
+    
+    while(erase != NULL)
+    {
+        
+        if(erase->number == remove)
+        {
+            before->next = erase->next;
+            
+            if(erase == last)
+            { last = before; }
+            
+            delete erase;
+            break;
+        }
+        
+        before = erase;
+        erase = erase->next;
+    }
+}
+
+
+
+//--------------------------------------------
+//  this method goes through the list and
+//  prints each part number and price
+//--------------------------------------------
+
+void
+Inventory::printparts(void)
+{
+    Part *travel;
+    travel = start;
+    //travel is assigned value of start
+    cout.setf(ios::fixed);
+    cout.precision(2);
+    
+    if (travel != NULL)
+    {
+        cout << "\nPart #" << setw(13) << "Price" << endl;
+    }
+    
+    while (travel != NULL)
+    {
+        cout << setw(5) << travel->number;
+        cout << setw(8) << '$' << setw(6) << travel->price << endl;
+        travel = travel->next;
+    }
+}
+
+//------------------------- main program ----------------------------
+
+int main()
+{
+    Inventory parts;
+    Part thing;
+    int value;
+    ifstream infile;
+    infile.open("link.dat");
+    
+    while(!infile.eof())
+    {
+        infile >> thing.number;
+        infile >> thing.price;
+        parts.link(thing);
+    }
+    parts.printparts();
+    infile.close();
+    
+    cout << "Please enter a value:" << endl;
+    cin >> value;
+    parts.remove(value);
+    parts.printparts();
+    
+    while(value != 0)
+    {
+    	parts.remove(value);
+    	
+    	cout << "Please enter a value, or a 0 if you want to exit:" << endl;
+    	cin >> value;
+    	
+    	parts.remove(value);
+    	parts.printparts();
+        
+    }
+    
+    
+    //system("pause");
+    return 0;
+}
